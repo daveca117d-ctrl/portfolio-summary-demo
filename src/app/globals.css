@@ -1,0 +1,185 @@
+@import "tailwindcss";
+
+/* ── Portfolio Summary — design tokens ───────────────────────────────────
+   Dark-navy shell + cream card panels on a white page ground (Home, Asset
+   Management, Development); Cashflow flips to a full dark-navy page, matching
+   the source Power BI report. */
+
+:root {
+  --paper: #ffffff;         /* page ground */
+  --navy: #262a35;          /* nav bar + Cashflow page background */
+  --navy-2: #2f3441;        /* slightly lighter navy, card headers on dark pages */
+  --cream: #efeae0;         /* card panel fill on light pages */
+  --cream-tint: #f6f3ec;    /* subtler panel fill / row stripe */
+  --cream-active: #e4dcc8;  /* active-tab highlight */
+  --ink: #1c1f26;           /* near-black text on light background */
+  --ink-70: #4a4e58;
+  --ink-50: #71757e;
+  --ink-30: #a7aab1;
+  --paper-ink: #f4f2ec;     /* text on dark navy background */
+  --paper-ink-70: #c7c9ce;
+  --rule: #e2ddd0;          /* hairlines on light background */
+  --rule-dark: #3b404d;     /* hairlines on navy background */
+
+  /* qualitative chart palette (pies, category series) */
+  --chart-1: #1f3a6e;  /* deep navy blue */
+  --chart-2: #2f7fd6;  /* mid blue */
+  --chart-3: #35b0c9;  /* teal */
+  --chart-4: #3a9e52;  /* green */
+  --chart-5: #d6a43a;  /* gold */
+  --chart-6: #e07a2c;  /* orange */
+  --chart-7: #c4457a;  /* magenta */
+  --chart-8: #6b4fa0;  /* purple */
+  --chart-9: #7c2d3a;  /* maroon */
+  --chart-10: #8a6f5c; /* clay */
+
+  /* series roles used consistently across capital-position / capex charts */
+  --series-acquisition: #1c1f26; /* black/near-navy */
+  --series-capex: #2f7fd6;       /* blue */
+  --series-valuation: #3a9e52;   /* green */
+  --series-forecast: #a7aab1;    /* muted grey-blue for forecast/dashed lines */
+
+  --green: #3a9e52;
+  --amber: #d6a43a;
+  --red: #97443c;
+  --red-dark: #6e2f29;   /* expiry-risk series (Rent at Risk chart) */
+  --red-light: #d99b93;  /* break-risk series (Rent at Risk chart) */
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-navy: var(--navy);
+  --color-navy-2: var(--navy-2);
+  --color-cream: var(--cream);
+  --color-cream-tint: var(--cream-tint);
+  --color-cream-active: var(--cream-active);
+  --color-ink: var(--ink);
+  --color-ink-70: var(--ink-70);
+  --color-ink-50: var(--ink-50);
+  --color-ink-30: var(--ink-30);
+  --color-paper-ink: var(--paper-ink);
+  --color-paper-ink-70: var(--paper-ink-70);
+  --color-rule: var(--rule);
+  --color-rule-dark: var(--rule-dark);
+  --color-green: var(--green);
+  --color-amber: var(--amber);
+  --color-red: var(--red);
+  --color-red-dark: var(--red-dark);
+  --color-red-light: var(--red-light);
+  --font-sans: var(--font-helvetica-now), "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
+  --font-condensed: var(--font-helvetica-now-condensed), var(--font-sans);
+}
+
+* { -webkit-font-smoothing: antialiased; box-sizing: border-box; }
+
+html { background: var(--paper); }
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-feature-settings: "tnum" 1;
+  letter-spacing: -0.006em;
+}
+
+/* Tracked-out uppercase caption — the recurring label voice. */
+.caption {
+  font-size: 0.6875rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-50);
+  font-weight: 500;
+}
+.caption-on-navy { color: var(--paper-ink-70); }
+
+/* Large confident numerals for key stats — condensed bold, matching the
+   brand's tight-tracked headline treatment. */
+.figure {
+  font-family: var(--font-condensed);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.tnum { font-variant-numeric: tabular-nums; }
+
+/* Card panel — white with a thin border. This is the default data/stat panel
+   (Capital Position, Income Position, chart panels, etc). */
+.panel {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  /* Reset text color explicitly — panels nested inside .navy-page (Cashflow,
+     the Development page's dark zone) would otherwise inherit its light
+     --paper-ink text color, making dark-on-white content unreadable. */
+  color: var(--ink);
+}
+
+/* Cream accent panel — reserved for callout/text boxes (Acquisition Strategy
+   and Business Plan, building-image surround), not general data panels. */
+.panel-accent {
+  background: var(--cream);
+  border-radius: 2px;
+}
+
+/* Bold underlined section title used inside white panels (CAPITAL POSITION,
+   INCOME POSITION, etc) — distinct from the small tracked-out .caption label
+   used for sidebar group headings. */
+.section-title {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  color: var(--ink);
+}
+.section-title-on-navy { color: var(--paper-ink); }
+
+/* Reversed key-metric row — black fill, white text — for the one or two
+   headline figures a panel wants to call out (e.g. Current Valuation). */
+.stat-highlight {
+  background: var(--ink);
+  color: var(--paper);
+  margin: 0 -0.75rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  border-radius: 1px;
+}
+.stat-highlight .text-ink-50 { color: var(--paper-ink-70); }
+
+/* Full dark-navy page shell (Cashflow tab). */
+.navy-page { background: var(--navy); color: var(--paper-ink); }
+
+/* Quiet data sheet. */
+.sheet { border-collapse: collapse; width: 100%; }
+.sheet th {
+  font-size: 0.6875rem; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--ink-50); font-weight: 500; text-align: right;
+  padding: 0.5rem 0.65rem; border-bottom: 1px solid var(--rule); white-space: nowrap;
+}
+.sheet th:first-child, .sheet td:first-child { text-align: left; }
+.sheet td {
+  padding: 0.45rem 0.65rem; border-bottom: 1px solid var(--rule);
+  font-variant-numeric: tabular-nums; font-size: 0.8125rem; text-align: right;
+  white-space: nowrap;
+}
+.sheet tbody tr:nth-child(even) { background: var(--cream-tint); }
+.sheet tbody tr:hover { background: var(--cream-active); }
+.sheet tfoot td { font-weight: 700; border-top: 2px solid var(--ink); border-bottom: none; }
+
+/* Same sheet styling, dark-navy variant (Cashflow tables). */
+.sheet-navy th {
+  color: var(--paper-ink-70); border-bottom: 1px solid var(--rule-dark);
+}
+.sheet-navy td {
+  border-bottom: 1px solid var(--rule-dark); color: var(--paper-ink);
+}
+
+input, select, button { font-family: inherit; }
+:focus-visible { outline: 2px solid var(--chart-2); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+}

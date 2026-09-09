@@ -1,0 +1,341 @@
+// Portfolio Summary — asset/development tracker for Morgan Real Estate
+// SQLite for local/single-server, mirroring the sibling Morgan Tracker project's
+// conventions but a fully independent database (never shared).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+/// One row per weekly workbook upload. The audit + rollback spine — every table
+/// below relates to a batch, and only one batch per dataset is ever "active".
+model ImportBatch {
+  id          String   @id @default(cuid())
+  dataset     String // always "portfolio" — one workbook, one dataset
+  createdAt   DateTime @default(now())
+  fileName    String
+  archivePath String // timestamped copy of the raw uploaded .xlsx
+  rowsRead    Int      @default(0)
+  rowsKept    Int      @default(0)
+  rowsDropped Int      @default(0)
+  report      String // JSON ValidationReport
+  active      Boolean  @default(false)
+
+  assets              Asset[]
+  tenancyRecords       TenancyRecord[]
+  leaseEvents          LeaseEvent[]
+  assetMetrics         AssetMetric[]
+  homeSummaries        HomeSummary[]
+  developmentMetrics   DevelopmentMetric[]
+  developmentCashflows DevelopmentCashflow[]
+  businessPlanRows     BusinessPlanVsCurrent[]
+  devTenancySchedule   DevelopmentTenancySchedule[]
+  cashflowLines        CashflowLine[]
+
+  @@index([dataset, active])
+}
+
+/// "Porfolio Data" — one row per property. The master asset registry.
+model Asset {
+  id      String      @id @default(cuid())
+  batchId String
+  batch   ImportBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  status                  String? // "Current" | "Sold" etc
+  address                 String
+  propertyCode            String?
+  postcode                String?
+  entity                  String? // Entity/SPV
+  tenure                  String?
+  leaseholdGearing        String?
+  purchaseDate            DateTime?
+  saleDate                DateTime?
+  holdPeriod              Float?
+  vendor                  String?
+  marketPP                Float?
+  marketPPPsf             Float?
+  rentAtPurchase          Float?
+  niy                     Float?
+  wautcAtPurchase         Float?
+  mcRole                  String?
+  occupancy               Float?
+  acquisitionNIA          Float?
+  acquisitionGIA          Float?
+  currentNIA              Float?
+  currentGIA              Float?
+  proposedNIA             Float?
+  proposedGIA             Float?
+  noFloors                Int?
+  tenants                 Int?
+  contractedRentPa        Float?
+  netRent                 Float?
+  ervPa                   Float?
+  stabilisedErvPa         Float?
+  partner                 String?
+  partnerImage            String?
+  partnerRepresentative   String?
+  currentCapitalCommitment Float?
+  currentEquityCommitment  Float?
+  currentDebtOutstanding   Float?
+  capexDuringHoldBudget    Float?
+  capexRemainingBudget     Float?
+  yieldOnCostForecast      Float?
+  currentValuation         Float?
+  latestValuationDate      DateTime?
+  projectedGDV             Float?
+  reinstatementValue       Float?
+  receptionName            String?
+  receptionEmail           String?
+  receptionAddress         String?
+  practicalCompletionDate  DateTime?
+  amFee                    Float?
+  amFeeBasis               String?
+  amFeePa                  Float?
+  valuationPsf             Float?
+  waut                     Float?
+  wautc                    Float?
+  epc                      String?
+  epcExpiry                DateTime?
+  capitalReturn            Float?
+  profitOnCost             Float?
+  totalReturn              Float?
+  equityMultiple            Float?
+  incomeReturn             Float?
+  rollingIRR               Float?
+  committedEquity          Float?
+  developmentStartDate     DateTime?
+  developmentCompletionDate DateTime?
+  durationYears             Float?
+  constructionCost          Float?
+  valuationYield            Float?
+  valuer                    String?
+  designStartDate           DateTime?
+  noiToDate                 Float?
+  execSum                   String?
+  currentYearReturn         Float?
+  equivalentYield            Float?
+  passingRentAtValuation     Float?
+  image                      String?
+  simpleStatus               String?
+
+  @@index([batchId, address])
+  @@index([batchId, partner])
+}
+
+/// "Tenancy Data" — one row per demise.
+model TenancyRecord {
+  id      String      @id @default(cuid())
+  batchId String
+  batch   ImportBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  address                String
+  postcode               String?
+  spv                    String?
+  floor                  String?
+  epcRating              String?
+  tenant                 String?
+  sector                 String?
+  use                    String?
+  giaSqft                Float?
+  niaSqft                Float?
+  itzaArea               Float?
+  rentPa                 Float?
+  rentPsf                Float?
+  ervPa                  Float?
+  ervPsf                 Float?
+  initialTerm            String?
+  leaseStart             DateTime?
+  breakOptions           DateTime?
+  nextRentReview         DateTime?
+  leaseExpiry            DateTime?
+  remainingTerm          Float?
+  rentCommencementDate   DateTime?
+  initialRentFreePeriod  String?
+  rentFreeAfterBreak     String?
+  guarantor              String?
+  subTenants             String?
+
+  @@index([batchId, address])
+}
+
+/// "Expiry & Contracted" — lease-expiry / rent-at-risk schedule.
+model LeaseEvent {
+  id      String      @id @default(cuid())
+  batchId String
+  batch   ImportBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  address           String
+  floor             String?
+  tenant            String?
+  leaseExpiry       DateTime?
+  status            String?
+  annualRent        Float?
+  rent              Float?
+  year              Int?
+  contractedIncome  Float?
+  expiry            Float?
+  breakValue        Float?
+  erv               Float?
+
+  @@index([batchId, address])
+  @@index([batchId, year])
+}
+
+/// "Asset Metrics" — long-format per-building time series. Drives every
+/// Asset Management chart (valuation, capex, IRR, NOI, income vs ERV, etc.)
+model AssetMetric {
+  id      String      @id @default(cuid())
+  batchId String
+  batch   ImportBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  address           String
+  year              Int
+  category          String // INCOME | OPEX | NOI | NOI RETURN | Occupancy by NIA | CAPITAL EXPENDITURE | ERV | YEAR END VALUATION | COMMITTED CAPITAL | ROLLING IRR | TOTAL ANNUAL RETURN | COMMITTED EQUITY | DEBT & RECEIPTS
+  amount            Float?
+  pctAmount         Float?
+  data              Float?
+  forecast          Float?
+  pctAmountForecast Float?
+  valueGain         Float?
+  noiToDate         Float?
+  income            Float?
+  forecastERV       Float?
+  erv               Float?
+  income1           Float?
+  forecastIncome    Float?
+  forecastValueGain Float?
+  averageNOI        Float?
+  passingRent       Float?
+  valuation         Float?
+
+  @@index([batchId, address, category])
+  @@index([batchId, address, year])
+}
+
+/// "Home" — a purpose-built flat table driving the Home page's pies and
+/// capital-position bars directly, no pivoting needed.
+model HomeSummary {
+  id      String      @id @default(cuid())
+  batchId String
+  batch   ImportBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  address           String?
+  partner           String?
+  category          String? // e.g. STABILISED | DEVELOPMENT
+  legend            String? // e.g. Acquisition | Capex to Date | Valuation
+  value             Float?
+  filter            String? // building name, for the portfolio-by-valuation pie
+  developmentYield  Float?
+
+  @@index([batchId, category])
+  @@index([batchId, partner])
+}
+
+/// "Development Metrics" — long-format development cost-category rows.
+model DevelopmentMetric {
+  id      String      @id @default(cuid())
+  batchId String
+  batch   ImportBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  asset              String
+  date               DateTime?
+  category           String? // Demo & Build, Professional Fees, Legal Costs, etc.
+  amount             Float?
+  businessPlan       Float?
+  currentBudget      Float?
+  budgetRentRoll     Float?
+  budgetRentRollPsf  Float?
+  currentRentRoll    Float?
+  currentRentRollPsf Float?
+  image              String?
+  mcLogo             String?
+
+  @@index([batchId, asset])
+  @@index([batchId, asset, category])
+}
+
+/// "Development Cashflow" — monthly capex spend, actual + forecast.
+model DevelopmentCashflow {
+  id      String      @id @default(cuid())
+  batchId String
+  batch   ImportBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  asset            String
+  date             DateTime
+  category         String?
+  amount           Float?
+  spendToDate      Float?
+  forecastedSpend  Float?
+  cumulativeSpend  Float?
+
+  @@index([batchId, asset])
+  @@index([batchId, asset, date])
+}
+
+/// "Business Plan vs Current" — the development variance table, plus
+/// asset-level summary/status fields.
+model BusinessPlanVsCurrent {
+  id      String      @id @default(cuid())
+  batchId String
+  batch   ImportBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  asset                  String
+  order                  String?
+  category               String?
+  target                 String?
+  currentExpectation     String?
+  difference             String?
+  comment                String?
+  developmentSummary     String?
+  stage                  String?
+  projectedPC            DateTime?
+  projectedStabilisation DateTime?
+  pctLet                 Float?
+  contractedIncome       Float?
+  marketSalePrice        Float?
+
+  @@index([batchId, asset])
+  @@index([batchId, asset, order])
+}
+
+/// "Development Tenancy Schedule" — target vs current-expectation demise rows.
+model DevelopmentTenancySchedule {
+  id      String      @id @default(cuid())
+  batchId String
+  batch   ImportBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  asset                     String
+  order                     String?
+  demise                    String?
+  targetNIA                 Float?
+  targetPsf                 Float?
+  currentExpectationNIA     Float?
+  sqftDifference             Float?
+  currentExpectationPsf     Float?
+  psfDifference             Float?
+  targetRentPa              Float?
+  currentExpectationRentPa  Float?
+  rentPaDifference          Float?
+
+  @@index([batchId, asset])
+}
+
+/// "Cashflow Input" — full-precision year-by-year cashflow, long format.
+model CashflowLine {
+  id      String      @id @default(cuid())
+  batchId String
+  batch   ImportBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  asset   String
+  segment String? // "Stabilised" | "Development" — the source sheet's unlabeled second column
+  line    String // COMMITTED CAPITAL | YEAR END VALUATION | PURCHASE COSTS | CAPITAL EXPENDITURE | DEBT & RECEIPTS | NOI TO DATE | INCOME | GROSS INCOME RETURN | OPEX | FINANCE COSTS | NOI | NOI RETURN
+  year    Int
+  value   Float?
+
+  @@index([batchId, asset])
+  @@index([batchId, asset, line])
+  @@index([batchId, year])
+}
