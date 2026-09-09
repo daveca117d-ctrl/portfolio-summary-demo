@@ -83,7 +83,7 @@ export default async function AssetManagementPage({
   const netInitialYield = asset.contractedRentPa && asset.currentValuation ? asset.contractedRentPa / asset.currentValuation : null;
 
   const tenancyTotals = detail.tenancy.reduce(
-    (acc, t) => ({
+    (acc: { nia: number; rentPa: number; ervPa: number }, t) => ({
       nia: acc.nia + (t.niaSqft ?? 0),
       rentPa: acc.rentPa + (t.rentPa ?? 0),
       ervPa: acc.ervPa + (t.ervPa ?? 0),
