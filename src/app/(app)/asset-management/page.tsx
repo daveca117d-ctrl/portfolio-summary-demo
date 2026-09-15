@@ -82,14 +82,12 @@ export default async function AssetManagementPage({
   const valuationPsf = asset.valuationPsf ?? (asset.currentValuation && asset.currentNIA ? asset.currentValuation / asset.currentNIA : null);
   const netInitialYield = asset.contractedRentPa && asset.currentValuation ? asset.contractedRentPa / asset.currentValuation : null;
 
-  const tenancyTotals = detail.tenancy.reduce<{ nia: number; rentPa: number; ervPa: number }>(
-    (acc, t) => ({
-      nia: acc.nia + (t.niaSqft ?? 0),
-      rentPa: acc.rentPa + (t.rentPa ?? 0),
-      ervPa: acc.ervPa + (t.ervPa ?? 0),
-    }),
-    { nia: 0, rentPa: 0, ervPa: 0 }
-  );
+  const tenancyTotals = { nia: 0, rentPa: 0, ervPa: 0 };
+  for (const t of detail.tenancy) {
+    tenancyTotals.nia += t.niaSqft ?? 0;
+    tenancyTotals.rentPa += t.rentPa ?? 0;
+    tenancyTotals.ervPa += t.ervPa ?? 0;
+  }
 
   return (
     <main className="p-8">
