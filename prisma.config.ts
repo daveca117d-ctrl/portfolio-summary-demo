@@ -8,7 +8,7 @@ export default defineConfig({
   migrations: {
     // This repo is the capability-demo copy — always seed the curated,
     // anonymised snapshot, never the real workbook seeder.
-    seed: "node --experimental-strip-types --env-file=.env prisma/seed-demo.ts",
+    seed: "node --experimental-strip-types --env-file-if-exists=.env prisma/seed-demo.ts",
   },
   datasource: {
     url: process.env.DATABASE_URL,
